@@ -663,7 +663,7 @@ function renderTaskForm(container, editTask = null) {
           </div>
           <div class="form-group">
             <label>Waktu</label>
-            <input type="time" id="form-time" value="${task.time || task.waktu || '08:00'}">
+            <input type="time" id="form-time" value="${task.jam || task.time || task.waktu || '08:00'}">
           </div>
         </div>
 
