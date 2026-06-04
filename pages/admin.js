@@ -429,14 +429,12 @@ async function saveAllCDHDrafts(container) {
    ============================================================ */
 
 function renderTaskManager(container) {
-  const today = new Date().toISOString().split('T')[0];
-
   container.innerHTML = `
     <div class="admin-section">
       <h2><i class="fas fa-tasks"></i> Manajemen Tugas</h2>
 
       <div class="filter-bar">
-        <input type="date" id="filter-date" value="${today}">
+        <input type="date" id="filter-date">
         <select id="filter-branch">
           <option value="">Semua Cabang</option>
           ${adminState.branches.map(b => `<option value="${b.id}">${b.outlet || b.name || b.nama || 'Cabang ' + b.id}</option>`).join('')}
