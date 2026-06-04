@@ -162,7 +162,7 @@ function renderCDHGenerator(container) {
             <label>Jadwalkan Publikasi</label>
             <div class="time-picker-row">
               <input type="date" id="cdh-schedule-date">
-              <input type="time" id="cdh-schedule-time" value="08:00">
+              <input type="time" id="cdh-schedule-time">
             </div>
             <p class="form-hint">Tanggal & jam untuk draft CDH</p>
           </div>
@@ -173,6 +173,15 @@ function renderCDHGenerator(container) {
       </div>
     </div>
   `;
+
+  // Set current time as default
+  const timeInput = container.querySelector('#cdh-schedule-time');
+  if (timeInput) {
+    const now = new Date();
+    const h = String(now.getHours()).padStart(2, '0');
+    const m = String(now.getMinutes()).padStart(2, '0');
+    timeInput.value = h + ':' + m;
+  }
 
   // Setup image upload
   const uploadArea = container.querySelector('#upload-area');

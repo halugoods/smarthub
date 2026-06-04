@@ -255,17 +255,17 @@ function showTaskDetail(task) {
 
           <div class="form-group">
             <label><i class="fab fa-tiktok"></i> Link TikTok</label>
-            <input type="url" id="submit-tiktok" placeholder="https://tiktok.com/..." value="${task.submitted_links?.tiktok || ''}">
+            <input type="url" id="submit-tiktok" placeholder="https://tiktok.com/..." value="${task.link_tiktok || ''}">
           </div>
 
           <div class="form-group">
             <label><i class="fab fa-instagram"></i> Link Instagram</label>
-            <input type="url" id="submit-ig" placeholder="https://instagram.com/..." value="${task.submitted_links?.instagram || task.submitted_links?.ig || ''}">
+            <input type="url" id="submit-ig" placeholder="https://instagram.com/..." value="${task.link_ig || ''}">
           </div>
 
           <div class="form-group">
             <label><i class="fab fa-facebook"></i> Link Facebook (opsional)</label>
-            <input type="url" id="submit-fb" placeholder="https://facebook.com/..." value="${task.submitted_links?.facebook || task.submitted_links?.fb || ''}">
+            <input type="url" id="submit-fb" placeholder="https://facebook.com/..." value="${task.link_fb || ''}">
           </div>
 
           <button class="btn btn-primary btn-block" id="btn-submit-task">
@@ -328,11 +328,9 @@ async function submitTask(task) {
   try {
     const payload = {
       status: 'waiting',
-      submitted_links: {
-        tiktok: tiktok,
-        instagram: ig,
-        facebook: fb || ''
-      }
+      link_tiktok: tiktok,
+      link_ig: ig,
+      link_fb: fb || ''
     };
 
     await apiPut(`/api/tasks/${task.id}`, payload);
@@ -364,7 +362,7 @@ async function submitTask(task) {
  * Render submitted links for completed tasks
  */
 function renderSubmittedLinks(task) {
-  const links = task.submitted_links || task.links || {};
+  const links = { tiktok: task.link_tiktok, instagram: task.link_ig, facebook: task.link_fb };
   const hasLinks = links.tiktok || links.instagram || links.ig || links.facebook || links.fb;
 
   if (!hasLinks) return '<p class="text-muted mt-8">Link tugas telah disubmit</p>';
