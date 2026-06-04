@@ -214,6 +214,25 @@ function renderCDHGenerator(container) {
 
   // Save CDH draft
   container.querySelector('#btn-save-cdh-draft').addEventListener('click', () => saveAllCDHDrafts(container));
+  
+  // Auto-fill date: ambil tanggal terakhir di D1 + 1 hari
+  autoFillDate(container);
+}
+
+/**
+ * Auto-fill jadwal tanggal: ambil last date dari DB, increment +1
+ */
+async function autoFillDate(container) {
+  try {
+    const resp = await fetch('https://smarthub-frontend.halugoods-indonesia.workers.dev/api/last-date');
+    const data = await resp.json();
+    if (data.success && data.last_date) {
+      const dateEl = container.querySelector('#cdh-schedule-date');
+      if (dateEl) dateEl.value = data.last_date;
+    }
+  } catch (err) {
+    console.warn('Gagal auto-fill tanggal:', err);
+  }
 }
 
 /**
