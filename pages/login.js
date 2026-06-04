@@ -131,7 +131,7 @@ async function loadBranches(selectEl) {
     branches.forEach(b => {
       const opt = document.createElement('option');
       opt.value = b.id;
-      opt.textContent = b.name || b.nama || `Cabang ${b.id}`;
+      opt.textContent = b.outlet || b.name || b.nama || `Cabang ${b.id}`;
       selectEl.appendChild(opt);
     });
   } catch (err) {
