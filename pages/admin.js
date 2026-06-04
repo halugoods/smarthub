@@ -162,7 +162,7 @@ function renderCDHGenerator(container) {
             <label>Jadwalkan Publikasi</label>
             <div class="time-picker-row">
               <input type="date" id="cdh-schedule-date">
-              <input type="time" id="cdh-schedule-time">
+              <input type="time" id="cdh-schedule-time" value="12:00">
             </div>
             <p class="form-hint">Tanggal & jam untuk draft CDH</p>
           </div>
@@ -173,15 +173,6 @@ function renderCDHGenerator(container) {
       </div>
     </div>
   `;
-
-  // Set current time as default
-  const timeInput = container.querySelector('#cdh-schedule-time');
-  if (timeInput) {
-    const now = new Date();
-    const h = String(now.getHours()).padStart(2, '0');
-    const m = String(now.getMinutes()).padStart(2, '0');
-    timeInput.value = h + ':' + m;
-  }
 
   // Setup image upload
   const uploadArea = container.querySelector('#upload-area');
@@ -214,25 +205,6 @@ function renderCDHGenerator(container) {
 
   // Save CDH draft
   container.querySelector('#btn-save-cdh-draft').addEventListener('click', () => saveAllCDHDrafts(container));
-  
-  // Auto-fill date: ambil tanggal terakhir di D1 + 1 hari
-  autoFillDate(container);
-}
-
-/**
- * Auto-fill jadwal tanggal: ambil last date dari DB, increment +1
- */
-async function autoFillDate(container) {
-  try {
-    const resp = await fetch('https://smarthub-frontend.halugoods-indonesia.workers.dev/api/last-date');
-    const data = await resp.json();
-    if (data.success && data.last_date) {
-      const dateEl = container.querySelector('#cdh-schedule-date');
-      if (dateEl) dateEl.value = data.last_date;
-    }
-  } catch (err) {
-    console.warn('Gagal auto-fill tanggal:', err);
-  }
 }
 
 /**
@@ -382,7 +354,7 @@ async function saveAllCDHDrafts(container) {
   const dateEl = document.getElementById('cdh-schedule-date');
   const timeEl = document.getElementById('cdh-schedule-time');
   const scheduleDate = dateEl ? dateEl.value : '';
-  const scheduleTime = timeEl ? timeEl.value : '08:00';
+  const scheduleTime = timeEl ? timeEl.value : '12:00';
 
   if (!scheduleDate) {
     showToast('Pilih tanggal jadwal terlebih dahulu', 'error');
@@ -710,7 +682,7 @@ function renderTaskForm(container, editTask = null) {
           </div>
           <div class="form-group">
             <label>Waktu</label>
-            <input type="time" id="form-time" value="${task.jam || task.time || task.waktu || '08:00'}">
+            <input type="time" id="form-time" value="${task.jam || task.time || task.waktu || '12:00'}">
           </div>
         </div>
 
@@ -782,6 +754,7 @@ async function saveTask(publish, isEdit, editTask) {
   // Validation
   if (!date) { showToast('Pilih tanggal', 'error'); return; }
   if (!branchId) { showToast('Pilih cabang', 'error'); return; }
+
   const musicLinks = [music1, music2].filter(Boolean);
 
   const payload = {
@@ -857,21 +830,10 @@ function getBranchName(branchId) {
 
 function formatDateDisplay(dateStr) {
   if (!dateStr) return '-';
-  const months = ['JANUARI','FEBRUARI','MARET','APRIL','MEI','JUNI','JULI','AGUSTUS','SEPTEMBER','OKTOBER','NOVEMBER','DESEMBER'];
-  // Try R2 filename format first: 20260604_053701_branch_random.ext
-  const r2Match = dateStr.match(/^(\d{4})(\d{2})(\d{2})_\d{6}_/);
-  if (r2Match) {
-    const d = parseInt(r2Match[3], 10);
-    const m = parseInt(r2Match[2], 10);
-    const y = r2Match[1];
-    return `${d} ${months[m-1]} ${y}`;
-  }
-  // Try YYYY-MM-DD or ISO date
+  // YYYY-MM-DD to DD/MM/YYYY
   const parts = dateStr.split('T')[0].split('-');
   if (parts.length === 3) {
-    const d = parseInt(parts[2], 10);
-    const m = parseInt(parts[1], 10);
-    return `${d} ${months[m-1]} ${parts[0]}`;
+    return `${parts[2]}/${parts[1]}/${parts[0]}`;
   }
   return dateStr;
 }
