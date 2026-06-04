@@ -77,7 +77,7 @@ async function loadCrewTasks() {
     console.warn('Gagal memuat tugas:', err);
     // Try without filter
     try {
-      const data = await apiGet('https://smarthub-frontend.halugoods-indonesia.workers.dev/api/tasks');
+      const data = await apiGet('/api/tasks');
       const allTasks = data.tasks || data || [];
       crewState.tasks = allTasks.filter(t => (t.branch_id || t.cabang_id) == crewState.branchId);
     } catch {
