@@ -420,7 +420,7 @@ function renderTaskManager(container) {
         <input type="date" id="filter-date" value="${today}">
         <select id="filter-branch">
           <option value="">Semua Cabang</option>
-          ${adminState.branches.map(b => `<option value="${b.id}">${b.name || b.nama || 'Cabang ' + b.id}</option>`).join('')}
+          ${adminState.branches.map(b => `<option value="${b.id}">${b.outlet || b.name || b.nama || 'Cabang ' + b.id}</option>`).join('')}
         </select>
       </div>
 
@@ -673,7 +673,7 @@ function renderTaskForm(container, editTask = null) {
             <option value="">-- Pilih Cabang --</option>
             ${adminState.branches.map(b => `
               <option value="${b.id}" ${(task.branch_id || task.cabang_id) == b.id ? 'selected' : ''}>
-                ${b.name || b.nama || 'Cabang ' + b.id}
+                ${b.outlet || b.name || b.nama || 'Cabang ' + b.id}
               </option>
             `).join('')}
           </select>
