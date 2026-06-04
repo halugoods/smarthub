@@ -30,12 +30,13 @@ export function renderCrew(container) {
 
   crewState.branchId = session.branchId;
   crewState.branchName = session.branchName || 'Cabang';
+  crewState.karyawan = session.karyawan || '';
 
   container.innerHTML = `
     <div class="app-header">
       <div>
         <h1><i class="fas fa-users"></i> Crew Panel</h1>
-        <div class="header-subtitle">${crewState.branchName}</div>
+        <div class="header-subtitle">${crewState.branchName} ${crewState.karyawan ? '— ' + crewState.karyawan : ''}</div>
       </div>
       <div class="header-actions">
         <button class="btn btn-sm btn-outline" id="btn-logout-crew">
@@ -46,7 +47,7 @@ export function renderCrew(container) {
 
     <div id="crew-content">
       <div class="crew-welcome">
-        <h2><i class="fas fa-hand-peace"></i> Halo, Tim ${crewState.branchName}!</h2>
+        <h2><i class="fas fa-hand-peace"></i> Halo, ${crewState.karyawan || 'Tim ' + crewState.branchName}!</h2>
         <p>Siap bekerja hari ini? 💪</p>
       </div>
 
@@ -203,10 +204,15 @@ function showTaskDetail(task) {
           <div style="margin-bottom:8px;">
             <img src="${gdrive}" style="max-width:100%;border-radius:8px;max-height:300px;object-fit:cover;" alt="Gambar CDH">
           </div>
-          <a href="${gdrive}" target="_blank" class="detail-link">
-            <i class="fas fa-external-link-alt"></i>
-            Buka Gambar
-          </a>
+          <div style="display:flex;gap:8px;">
+            <a href="${gdrive}" target="_blank" class="detail-link" style="flex:1;">
+              <i class="fas fa-external-link-alt"></i>
+              Buka Gambar
+            </a>
+            <button class="btn btn-sm btn-primary btn-download-img" data-url="${gdrive}" style="flex:1;">
+              <i class="fas fa-download"></i> Download
+            </button>
+          </div>
         ` : `
           <a href="${gdrive}" target="_blank" class="detail-link">
             <i class="fas fa-external-link-alt"></i>
@@ -313,6 +319,34 @@ function showTaskDetail(task) {
     copyHashtag.addEventListener('click', () => copyText(hashtag, copyHashtag));
   }
 
+  // Download image handler
+  const downloadBtn = document.querySelector('#crew-content .btn-download-img');
+  if (downloadBtn) {
+    downloadBtn.addEventListener('click', async () => {
+      const url = downloadBtn.dataset.url;
+      try {
+        downloadBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Mendownload...';
+        const response = await fetch(url);
+        const blob = await response.blob();
+        const blobUrl = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = blobUrl;
+        a.download = 'cdh-image.jpg';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(blobUrl);
+        downloadBtn.innerHTML = '<i class="fas fa-check"></i> Selesai';
+        setTimeout(() => {
+          downloadBtn.innerHTML = '<i class="fas fa-download"></i> Download';
+        }, 2000);
+      } catch (err) {
+        downloadBtn.innerHTML = '<i class="fas fa-download"></i> Download';
+        showToast('Gagal download gambar', 'error');
+      }
+    });
+  }
+
   // Submit handler
   const submitBtn = document.getElementById('btn-submit-task');
   if (submitBtn) {
@@ -353,7 +387,7 @@ async function submitTask(task) {
     const content = document.getElementById('crew-content');
     content.innerHTML = `
       <div class="crew-welcome">
-        <h2><i class="fas fa-hand-peace"></i> Halo, Tim ${crewState.branchName}!</h2>
+        <h2><i class="fas fa-hand-peace"></i> Halo, ${crewState.karyawan || 'Tim ' + crewState.branchName}!</h2>
         <p>Siap bekerja hari ini? 💪</p>
       </div>
       <div id="crew-tasks-section" class="crew-today"></div>

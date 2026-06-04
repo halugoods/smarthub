@@ -188,6 +188,7 @@ async function handleLogin(role, credentials) {
     if (role === 'crew') {
       session.branchId = credentials.branchId;
       session.branchName = getBranchName(credentials.branchId);
+      session.karyawan = data.branch?.karyawan || '';
     }
     sessionStorage.setItem('smarthub_session', JSON.stringify(session));
     window.appState.currentUser = session;
