@@ -171,7 +171,8 @@ function showTaskDetail(task) {
   const content = document.getElementById('crew-content');
 
   const dateDisplay = formatDate(task.date || task.tanggal || task.created_at);
-  const gdrive = task.gdrive_link || task.link_gdrive || '';
+  const gdrive = task.link_drive || task.gdrive_link || task.link_gdrive || '';
+  const isImage = gdrive && (gdrive.match(/\.(jpg|jpeg|png|gif|webp)(\?.*)?$/i) || gdrive.includes('r2.dev'));
   const musicLinks = task.music_links || task.audio_links || [];
   const caption = task.caption || '';
   const deskripsi = task.deskripsi || task.description || '';
@@ -195,16 +196,24 @@ function showTaskDetail(task) {
         </div>
       </div>
 
-      <!-- Google Drive Link -->
+      <!-- Gambar / Link -->
       <div class="detail-section">
-        <h4><i class="fab fa-google-drive"></i> Google Drive</h4>
-        ${gdrive ? `
+        <h4><i class="fas fa-image"></i> Gambar</h4>
+        ${gdrive ? (isImage ? `
+          <div style="margin-bottom:8px;">
+            <img src="${gdrive}" style="max-width:100%;border-radius:8px;max-height:300px;object-fit:cover;" alt="Gambar CDH">
+          </div>
           <a href="${gdrive}" target="_blank" class="detail-link">
             <i class="fas fa-external-link-alt"></i>
-            Buka Link Google Drive
+            Buka Gambar
           </a>
         ` : `
-          <p class="text-muted">Tidak ada link Google Drive</p>
+          <a href="${gdrive}" target="_blank" class="detail-link">
+            <i class="fas fa-external-link-alt"></i>
+            Buka Link
+          </a>
+        `) : `
+          <p class="text-muted">Tidak ada gambar</p>
         `}
       </div>
 
