@@ -372,13 +372,38 @@ async function saveAllCDHDrafts(container) {
 
   showLoading();
   try {
+    // Upload image to R2 if available
+    let imageUrl = '';
+    if (adminState.imagePreviewUrl && adminState.imagePreviewUrl.startsWith('data:image')) {
+      try {
+        const uploadResp = await fetch('https://smarthub-frontend.halugoods-indonesia.workers.dev/api/upload', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${getToken()}`
+          },
+          body: JSON.stringify({
+            image: adminState.imagePreviewUrl,
+            branch_id: 'cdh'
+          })
+        });
+        const uploadData = await uploadResp.json();
+        if (uploadData.success && uploadData.url) {
+          imageUrl = uploadData.url;
+        }
+      } catch (uploadErr) {
+        console.warn('Image upload skipped:', uploadErr);
+      }
+    }
+
     const payload = {
       date: formatDateToAPI(scheduleDate),
       time: scheduleTime,
       items: adminState.cdhResults.map((item, idx) => ({
         branch_id: item.branch_id,
         deskripsi: container.querySelector(`.cdh-deskripsi[data-index="${idx}"]`)?.value || item.deskripsi || '',
-        hashtag: container.querySelector(`.cdh-hashtag[data-index="${idx}"]`)?.value || item.hashtag || ''
+        hashtag: container.querySelector(`.cdh-hashtag[data-index="${idx}"]`)?.value || item.hashtag || '',
+        link_drive: imageUrl || ''
       }))
     };
 
