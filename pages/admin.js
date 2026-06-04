@@ -162,7 +162,7 @@ function renderCDHGenerator(container) {
             <label>Jadwalkan Publikasi</label>
             <div class="time-picker-row">
               <input type="date" id="cdh-schedule-date">
-              <input type="time" id="cdh-schedule-time" value="08:00">
+              <input type="time" id="cdh-schedule-time" value="12:00">
             </div>
             <p class="form-hint">Tanggal & jam untuk draft CDH</p>
           </div>
@@ -201,16 +201,17 @@ function renderCDHGenerator(container) {
   });
 
   // Generate CDH
-  container.querySelector('#btn-generate-cdh').addEventListener('click', generateCDH);
+  container.querySelector('#btn-generate-cdh').addEventListener('click', () => generateCDH(container));
 
   // Save CDH draft
-  container.querySelector('#btn-save-cdh-draft').addEventListener('click', saveAllCDHDrafts);
+  container.querySelector('#btn-save-cdh-draft').addEventListener('click', () => saveAllCDHDrafts(container));
 }
 
 /**
  * Generate CDH from uploaded image
+ * @param {Element} container
  */
-async function generateCDH() {
+async function generateCDH(container) {
   if (!adminState.selectedImage) {
     showToast('Upload gambar terlebih dahulu', 'error');
     return;
@@ -218,48 +219,40 @@ async function generateCDH() {
 
   showLoading();
   try {
-    // Try API call first
-    const formData = new FormData();
-    formData.append('image', adminState.selectedImage);
+    // Convert image to base64
+    const imageData = await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(adminState.selectedImage);
+    });
 
-    const response = await fetch('/api/cdh/generate', {
+    // Call generate-cdh endpoint (returns CDH for all 7 branches)
+    const response = await fetch('https://smarthub-frontend.halugoods-indonesia.workers.dev/api/generate-cdh', {
       method: 'POST',
       headers: {
+        'Content-Type': 'application/json',
         'Authorization': `Bearer ${getToken()}`
       },
-      body: formData
+      body: JSON.stringify({ image: imageData })
     });
 
     if (response.ok) {
       const data = await response.json();
-      adminState.cdhResults = data.results || data.cdh || [];
+      adminState.cdhResults = data.cdh || [];
+      renderCDHResults(container);
+      hideLoading();
+      showToast('CDH berhasil di-generate!', 'success');
+      return;
     } else {
-      throw new Error('API tidak tersedia');
+      const errData = await response.json().catch(() => ({}));
+      throw new Error(errData.message || `HTTP ${response.status}`);
     }
   } catch (err) {
-    console.warn('CDH API fallback:', err.message);
-    // Generate demo CDH data
-    const branches = adminState.branches.length > 0 ? adminState.branches : [
-      { id: 1, name: 'Cabang Utama' },
-      { id: 2, name: 'Cabang Kedua' },
-      { id: 3, name: 'Cabang Ketiga' },
-      { id: 4, name: 'Cabang Keempat' },
-      { id: 5, name: 'Cabang Kelima' },
-      { id: 6, name: 'Cabang Keenam' },
-      { id: 7, name: 'Cabang Ketujuh' }
-    ];
-    adminState.cdhResults = branches.map(b => ({
-      branch_id: b.id,
-      branch_name: b.name || b.nama,
-      caption: `Caption untuk ${b.name || b.nama} - Smart Hub\n#SmartHubIndonesia`,
-      deskripsi: `Deskripsi konten untuk ${b.name || b.nama}. Konten ini merupakan bagian dari program Smart Hub.`,
-      hashtag: '#SmartHub #KontenKreatif #Digital'
-    }));
+    console.warn('CDH generate error:', err.message);
+    hideLoading();
+    showToast('Gagal generate CDH: ' + err.message, 'error');
   }
-
-  renderCDHResults(container);
-  hideLoading();
-  showToast('CDH berhasil di-generate!', 'success');
 }
 
 /**
@@ -275,23 +268,14 @@ function renderCDHResults(container) {
     html += `
       <div class="cdh-card" data-index="${index}">
         <div class="cdh-card-header">
-          <span class="branch-name"><i class="fas fa-code-branch"></i> ${item.branch_name}</span>
+          <span class="branch-name"><i class="fas fa-code-branch"></i> ${escapeHtml(item.branch_id || '')}</span>
           <span class="badge badge-draft">Draft</span>
         </div>
         <div class="cdh-card-body">
           <div class="form-group">
-            <label>Caption</label>
+            <label>CDH Lengkap</label>
             <div style="position:relative;">
-              <textarea class="cdh-caption" data-index="${index}" rows="3">${escapeHtml(item.caption || '')}</textarea>
-              <button class="copy-btn" style="position:absolute;top:4px;right:4px;" data-copy="caption-${index}">
-                <i class="fas fa-copy"></i> Salin
-              </button>
-            </div>
-          </div>
-          <div class="form-group">
-            <label>Deskripsi</label>
-            <div style="position:relative;">
-              <textarea class="cdh-deskripsi" data-index="${index}" rows="2">${escapeHtml(item.deskripsi || '')}</textarea>
+              <textarea class="cdh-deskripsi" data-index="${index}" rows="6">${escapeHtml(item.deskripsi || '')}</textarea>
               <button class="copy-btn" style="position:absolute;top:4px;right:4px;" data-copy="deskripsi-${index}">
                 <i class="fas fa-copy"></i> Salin
               </button>
@@ -364,12 +348,13 @@ function renderCDHResults(container) {
 
 /**
  * Save all CDH as drafts
+ * @param {Element} container
  */
-async function saveAllCDHDrafts() {
+async function saveAllCDHDrafts(container) {
   const dateEl = document.getElementById('cdh-schedule-date');
   const timeEl = document.getElementById('cdh-schedule-time');
   const scheduleDate = dateEl ? dateEl.value : '';
-  const scheduleTime = timeEl ? timeEl.value : '08:00';
+  const scheduleTime = timeEl ? timeEl.value : '12:00';
 
   if (!scheduleDate) {
     showToast('Pilih tanggal jadwal terlebih dahulu', 'error');
@@ -378,18 +363,43 @@ async function saveAllCDHDrafts() {
 
   showLoading();
   try {
+    // Upload image to R2 if available
+    let imageUrl = '';
+    if (adminState.imagePreviewUrl && adminState.imagePreviewUrl.startsWith('data:image')) {
+      try {
+        const uploadResp = await fetch('https://smarthub-frontend.halugoods-indonesia.workers.dev/api/upload', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${getToken()}`
+          },
+          body: JSON.stringify({
+            image: adminState.imagePreviewUrl,
+            branch_id: 'cdh',
+            tanggal: scheduleDate ? formatDateToAPI(scheduleDate) : undefined
+          })
+        });
+        const uploadData = await uploadResp.json();
+        if (uploadData.success && uploadData.url) {
+          imageUrl = uploadData.url;
+        }
+      } catch (uploadErr) {
+        console.warn('Image upload skipped:', uploadErr);
+      }
+    }
+
     const payload = {
       date: formatDateToAPI(scheduleDate),
       time: scheduleTime,
-      items: adminState.cdhResults.map(item => ({
+      items: adminState.cdhResults.map((item, idx) => ({
         branch_id: item.branch_id,
-        caption: item.caption || container.querySelector(`.cdh-caption[data-index="${adminState.cdhResults.indexOf(item)}"]`)?.value || '',
-        deskripsi: item.deskripsi || '',
-        hashtag: item.hashtag || ''
+        deskripsi: container.querySelector(`.cdh-deskripsi[data-index="${idx}"]`)?.value || item.deskripsi || '',
+        hashtag: container.querySelector(`.cdh-hashtag[data-index="${idx}"]`)?.value || item.hashtag || '',
+        link_drive: imageUrl || ''
       }))
     };
 
-    const response = await fetch('/api/cdh', {
+    const response = await fetch('https://smarthub-frontend.halugoods-indonesia.workers.dev/api/cdh', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -400,8 +410,10 @@ async function saveAllCDHDrafts() {
 
     if (response.ok) {
       showToast('Semua CDH berhasil disimpan sebagai draft!', 'success');
-      // Refresh tasks
-      loadAdminData(document.getElementById('app'));
+      // Reset image but keep CDH results visible
+      adminState.imagePreviewUrl = null;
+      const preview = document.getElementById('cdh-image-preview');
+      if (preview) preview.src = '';
     } else {
       throw new Error('Gagal menyimpan');
     }
@@ -427,7 +439,7 @@ function renderTaskManager(container) {
         <input type="date" id="filter-date" value="${today}">
         <select id="filter-branch">
           <option value="">Semua Cabang</option>
-          ${adminState.branches.map(b => `<option value="${b.id}">${b.name || b.nama || 'Cabang ' + b.id}</option>`).join('')}
+          ${adminState.branches.map(b => `<option value="${b.id}">${b.outlet || b.name || b.nama || 'Cabang ' + b.id}</option>`).join('')}
         </select>
       </div>
 
@@ -670,7 +682,7 @@ function renderTaskForm(container, editTask = null) {
           </div>
           <div class="form-group">
             <label>Waktu</label>
-            <input type="time" id="form-time" value="${task.time || task.waktu || '08:00'}">
+            <input type="time" id="form-time" value="${task.jam || task.time || task.waktu || '12:00'}">
           </div>
         </div>
 
@@ -680,15 +692,15 @@ function renderTaskForm(container, editTask = null) {
             <option value="">-- Pilih Cabang --</option>
             ${adminState.branches.map(b => `
               <option value="${b.id}" ${(task.branch_id || task.cabang_id) == b.id ? 'selected' : ''}>
-                ${b.name || b.nama || 'Cabang ' + b.id}
+                ${b.outlet || b.name || b.nama || 'Cabang ' + b.id}
               </option>
             `).join('')}
           </select>
         </div>
 
         <div class="form-group">
-          <label>Link Google Drive</label>
-          <input type="url" id="form-gdrive" placeholder="https://drive.google.com/..." value="${task.gdrive_link || task.link_gdrive || ''}">
+          <label>Link File (GDrive / R2)</label>
+          <input type="url" id="form-gdrive" placeholder="https://..." value="${task.link_drive || task.gdrive_link || task.link_gdrive || ''}">
         </div>
 
         <div class="form-group">
@@ -742,7 +754,6 @@ async function saveTask(publish, isEdit, editTask) {
   // Validation
   if (!date) { showToast('Pilih tanggal', 'error'); return; }
   if (!branchId) { showToast('Pilih cabang', 'error'); return; }
-  if (!gdrive) { showToast('Masukkan link Google Drive', 'error'); return; }
 
   const musicLinks = [music1, music2].filter(Boolean);
 
@@ -750,7 +761,7 @@ async function saveTask(publish, isEdit, editTask) {
     date: formatDateToAPI(date),
     time: time,
     branch_id: parseInt(branchId),
-    gdrive_link: gdrive,
+    link_drive: gdrive,
     caption: caption,
     deskripsi: deskripsi,
     hashtag: hashtag,
