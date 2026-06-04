@@ -708,8 +708,8 @@ function renderTaskForm(container, editTask = null) {
         </div>
 
         <div class="form-group">
-          <label>Link Google Drive</label>
-          <input type="url" id="form-gdrive" placeholder="https://drive.google.com/..." value="${task.gdrive_link || task.link_gdrive || ''}">
+          <label>Link File (GDrive / R2)</label>
+          <input type="url" id="form-gdrive" placeholder="https://..." value="${task.link_drive || task.gdrive_link || task.link_gdrive || ''}">
         </div>
 
         <div class="form-group">
@@ -763,15 +763,13 @@ async function saveTask(publish, isEdit, editTask) {
   // Validation
   if (!date) { showToast('Pilih tanggal', 'error'); return; }
   if (!branchId) { showToast('Pilih cabang', 'error'); return; }
-  if (!gdrive) { showToast('Masukkan link Google Drive', 'error'); return; }
-
   const musicLinks = [music1, music2].filter(Boolean);
 
   const payload = {
     date: formatDateToAPI(date),
     time: time,
     branch_id: parseInt(branchId),
-    gdrive_link: gdrive,
+    link_drive: gdrive,
     caption: caption,
     deskripsi: deskripsi,
     hashtag: hashtag,
