@@ -838,10 +838,21 @@ function getBranchName(branchId) {
 
 function formatDateDisplay(dateStr) {
   if (!dateStr) return '-';
-  // YYYY-MM-DD to DD/MM/YYYY
+  const months = ['JANUARI','FEBRUARI','MARET','APRIL','MEI','JUNI','JULI','AGUSTUS','SEPTEMBER','OKTOBER','NOVEMBER','DESEMBER'];
+  // Try R2 filename format first: 20260604_053701_branch_random.ext
+  const r2Match = dateStr.match(/^(\d{4})(\d{2})(\d{2})_\d{6}_/);
+  if (r2Match) {
+    const d = parseInt(r2Match[3], 10);
+    const m = parseInt(r2Match[2], 10);
+    const y = r2Match[1];
+    return `${d} ${months[m-1]} ${y}`;
+  }
+  // Try YYYY-MM-DD or ISO date
   const parts = dateStr.split('T')[0].split('-');
   if (parts.length === 3) {
-    return `${parts[2]}/${parts[1]}/${parts[0]}`;
+    const d = parseInt(parts[2], 10);
+    const m = parseInt(parts[1], 10);
+    return `${d} ${months[m-1]} ${parts[0]}`;
   }
   return dateStr;
 }
