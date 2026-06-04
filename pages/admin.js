@@ -384,7 +384,8 @@ async function saveAllCDHDrafts(container) {
           },
           body: JSON.stringify({
             image: adminState.imagePreviewUrl,
-            branch_id: 'cdh'
+            branch_id: 'cdh',
+            tanggal: scheduleDate ? formatDateToAPI(scheduleDate) : undefined
           })
         });
         const uploadData = await uploadResp.json();
@@ -418,8 +419,10 @@ async function saveAllCDHDrafts(container) {
 
     if (response.ok) {
       showToast('Semua CDH berhasil disimpan sebagai draft!', 'success');
-      // Refresh tasks
-      loadAdminData(document.getElementById('app'));
+      // Reset image but keep CDH results visible
+      adminState.imagePreviewUrl = null;
+      const preview = document.getElementById('cdh-image-preview');
+      if (preview) preview.src = '';
     } else {
       throw new Error('Gagal menyimpan');
     }
