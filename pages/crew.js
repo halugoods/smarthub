@@ -78,7 +78,7 @@ async function loadCrewTasks() {
     console.warn('Gagal memuat tugas:', err);
     // Try without filter
     try {
-      const data = await apiGet('https://smarthub-frontend.halugoods-indonesia.workers.dev/api/tasks');
+      const data = await apiGet('/api/tasks');
       const allTasks = data.tasks || data || [];
       crewState.tasks = allTasks.filter(t => (t.branch_id || t.cabang_id) == crewState.branchId);
     } catch {
@@ -327,7 +327,7 @@ function showTaskDetail(task) {
       downloadBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Mendownload...';
 
       // Try direct download via Worker proxy (CORS-friendly)
-      const proxyUrl = 'https://smarthub-frontend.halugoods-indonesia.workers.dev/api/proxy-image?url=' + encodeURIComponent(url);
+      const proxyUrl = '/api/proxy-image?url=' + encodeURIComponent(url);
       try {
         const response = await fetch(proxyUrl);
         if (!response.ok) throw new Error('Proxy failed');

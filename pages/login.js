@@ -124,7 +124,7 @@ export function renderLogin(container) {
  */
 async function loadBranches(selectEl) {
   try {
-    const data = await apiGet('https://smarthub-frontend.halugoods-indonesia.workers.dev/api/branches');
+    const data = await apiGet('/api/branches');
     const branches = data.branches || data || [];
     loginState.branches = branches;
     selectEl.innerHTML = '<option value="">-- Pilih Cabang --</option>';
